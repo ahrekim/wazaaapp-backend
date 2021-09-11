@@ -18,7 +18,7 @@ class HappeningsSeeder extends Seeder
     public function run()
     {
         $client = new GuzzleHttp\Client();
-        $musicEvents = $client->request("GET", "https://api.hel.fi/linkedevents/v1/event?keywords=yso:p1808&start=today&end=".Carbon::now()->addDays(7));
+        $musicEvents = $client->request("GET", "https://api.hel.fi/linkedevents/v1/event?keywords=yso:p1808&start=today&end=".Carbon::now()->addHours(6));
 
         if($musicEvents->getStatusCode()){
             $events = json_decode($musicEvents->getBody());
@@ -32,8 +32,8 @@ class HappeningsSeeder extends Seeder
                         $happening->source_identifier = $eventData->id;
                         $happening->public = true;
                         $happening->managed_happening = false;
-                        $happening->happening_name = $eventData->name->fi;
-                        $happening->happening_information = $eventData->short_description->fi;
+                        $happening->happening_name = $eventData->name->fi ?? null;
+                        $happening->happening_information = $eventData->short_description->fi ?? null;
                         $happening->happening_starts = Carbon::parse($eventData->start_time)->format("d.m.Y H:i");
                         $happening->happening_ends = Carbon::parse($eventData->end_time)->format("d.m.Y H:i");
     
@@ -46,10 +46,12 @@ class HappeningsSeeder extends Seeder
                             $eventLocation = $locationClient->request("GET", $arrLink);
                             if($eventLocation->getStatusCode() == 200){
                                 $eventLocation = json_decode($eventLocation->getBody());
-                                $happening->street_address = $eventLocation->street_address->fi;
-                                $happening->city = $eventLocation->address_locality->fi;
-                                $happening->latitude = $eventLocation->position->coordinates[0];
-                                $happening->longitude = $eventLocation->position->coordinates[1];
+                                $happening->street_address = $eventLocation->street_address->fi ?? null;
+                                $happening->city = $eventLocation->address_locality->fi ?? null;
+                                if(isset($eventLocation->position)){
+                                    $happening->latitude = $eventLocation->position->coordinates[0];
+                                    $happening->longitude = $eventLocation->position->coordinates[1];
+                                }
                             }
                         }
                         $happening->save();
