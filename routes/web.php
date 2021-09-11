@@ -22,8 +22,6 @@ Route::get('/', function () {
     return view('welcome');
 });
 
-Auth::routes();
-
 Route::get('/home', 'HomeController@index')->name('home');
 // Gallery
 Route::get('/gallery', 'GalleryController@index')->name('gallery');

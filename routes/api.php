@@ -19,6 +19,8 @@ use Illuminate\Support\Facades\Route;
 Route::post('/public/contactforms', 'ContactController@postContactForm');
 // Post login
 Route::post('/public/login', 'AuthController@login');
+// Get public events
+Route::get('/public/events/{x?}/{y?}', 'EventsController@getPublicEvents');
 
 // Go to invite by uuid
 Route::get('/public/invitation/{uuid}', 'InviteController@show');
@@ -35,17 +37,17 @@ Route::get('/happening/{uuid}/photo', 'PhotosController@getPhoto');
 
 // Auth routes
 Route::middleware(['auth:sanctum'])->prefix('auth')->group(function () {
-    Route::get('/me', 'AdminController@me');
-    Route::patch('/password', 'AdminController@changePassword');
+    Route::get('/me', 'AuthController@me');
+    Route::patch('/password', 'AuthController@changePassword');
 
     // Happenings management
-    Route::get('/happenings', 'AdminController@getHappenings');
+    Route::get('/happenings', 'AuthController@getHappenings');
     // Happening management
-    Route::get('/happenings/{uuid}', 'AdminController@getHappening');
+    Route::get('/happenings/{uuid}', 'AuthController@getHappening');
     // Save happening
-    Route::post('/happenings', 'AdminController@saveHappening');
+    Route::post('/happenings', 'AuthController@saveHappening');
     // Delete happening
-    Route::delete('/happenings/{uuid}', 'AdminController@deleteHappening');
+    Route::delete('/happenings/{uuid}', 'AuthController@deleteHappening');
     // Delete Photos
     Route::delete('/photos/{uuid}', 'PhotosController@deletePhoto');
 });
