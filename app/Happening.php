@@ -17,11 +17,17 @@ class Happening extends Model
 
 
     /**
-     * 
-     * Has-many inties
+     * Has-many invites
      */
     public function invites(){
         return $this->hasMany(Invite::class);
+    }
+    
+    /**
+     * Many-to-many relation between tags and happenings
+     */
+    public function tags(){
+        return $this->belongsToMany(Tag::class);
     }
 
     public function getHappeningStartsAttribute($value)

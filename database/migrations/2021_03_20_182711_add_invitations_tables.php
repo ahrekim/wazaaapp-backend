@@ -21,8 +21,11 @@ class AddInvitationsTables extends Migration
             $table->boolean('managed_happening')->default(true); // If not managed it's a happening that is simply scraped from the internet or public knowledge
             $table->integer('user_id')->default(0); // If not managed and systematically created there is no user
             $table->string('happening_type', 128)->nullable();
-            $table->string('happening_name', 128);
+            $table->string('happening_name', 256);
             $table->text('happening_information')->nullable();
+            $table->string('happening_name_local', 128);
+            $table->text('happening_information_local')->nullable();
+            $table->string('locality', 128);
             $table->datetime('happening_starts')->nullable();
             $table->datetime('happening_ends')->nullable();
             $table->string('street_address', 256)->nullable();
