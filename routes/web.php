@@ -18,12 +18,4 @@ use App\Helpers\Helpers;
 |
 */
 
-Route::get('/', function () {
-    return view('welcome');
-});
-
-Route::get('/home', 'HomeController@index')->name('home');
-// Gallery
-Route::get('/gallery', 'GalleryController@index')->name('gallery');
-// Posts
-Route::get('/posts', 'PostController@index')->name('posts');
+Route::get('/', 'HomeController@index');
