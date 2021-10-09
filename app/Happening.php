@@ -32,7 +32,7 @@ class Happening extends Model
 
     public function getHappeningStartsAttribute($value)
     {
-        return Carbon::parse($value)->format('d.m.Y H:i');
+        return Carbon::parse($value)->format('Y-m-d H:i');
     }
 
 
@@ -44,26 +44,26 @@ class Happening extends Model
         {
             return Carbon::parse($value)->format('H:i');
         } else {
-            return Carbon::parse($value)->format('d.m.Y H:i');
+            return Carbon::parse($value)->format('Y-m-d H:i');
         }
     }
     
     public function getHappeningEndsOrgAttribute()
     {
-        return Carbon::parse($this->attributes["happening_ends"])->format('d.m.Y H:i');
+        return Carbon::parse($this->attributes["happening_ends"])->format('Y-m-d H:i');
     }
 
     public function setHappeningEndsAttribute($value)
     {
         if(!empty($value)){
-            $this->attributes["happening_ends"] = Carbon::createFromFormat("d.m.Y H:i", $value);
+            $this->attributes["happening_ends"] = Carbon::createFromFormat("Y-m-d H:i", $value);
         }
     }
 
     public function setHappeningStartsAttribute($value)
     {
         if(!empty($value)){
-            $this->attributes["happening_starts"] = Carbon::createFromFormat("d.m.Y H:i", $value);
+            $this->attributes["happening_starts"] = Carbon::createFromFormat("Y-m-d H:i", $value);
         }
     }
 }

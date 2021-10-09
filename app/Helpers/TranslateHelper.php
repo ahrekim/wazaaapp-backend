@@ -5,6 +5,8 @@ use GuzzleHttp\Client as Guzzle;
 
 class TranslateHelper {
     public static function translate(string $string = '', string $source, string $target) {
+
+        return $string;
         
         $client = new Guzzle();
         $translate = $client->request("POST", "https://translate.astian.org/translate", [
@@ -16,7 +18,7 @@ class TranslateHelper {
         ]);
 
         if($translate->getStatusCode() == 200){
-            return json_decode($translate->getBody())->translatedText;
+            return "(LibreTranslate): ".json_decode($translate->getBody())->translatedText;
         } else {
             return "Failed translation";
         }

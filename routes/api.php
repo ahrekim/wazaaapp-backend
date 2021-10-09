@@ -20,7 +20,7 @@ Route::post('/public/contactforms', 'ContactController@postContactForm');
 // Post login
 Route::post('/public/login', 'AuthController@login');
 // Get public events
-Route::get('/public/events/{x?}/{y?}', 'EventsController@getPublicEvents');
+Route::get('/public/events/{filter?}', 'EventsController@getPublicEvents');
 
 // Go to invite by uuid
 Route::get('/public/invitation/{uuid}', 'InviteController@show');
@@ -39,6 +39,9 @@ Route::get('/happening/{uuid}/photo', 'PhotosController@getPhoto');
 Route::middleware(['auth:sanctum'])->prefix('auth')->group(function () {
     Route::get('/me', 'AuthController@me');
     Route::patch('/password', 'AuthController@changePassword');
+
+    // Get events
+    Route::get('/events/{filter?}', 'AuthController@getEvents');
 
     // Happenings management
     Route::get('/happenings', 'AuthController@getHappenings');

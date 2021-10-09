@@ -11,9 +11,48 @@ use Illuminate\Support\Facades\Validator;
 use App\Helpers\Helpers;
 use Illuminate\Support\Facades\Auth;
 use App\Happening;
+use App\Invite;
 
 class AuthController extends Controller
 {
+    
+    /**
+     * Get events
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function getEvents($filter = null)
+    {
+        return Happening::where(function($query){
+            if(Auth::user()){
+                $query->where('public', '=', true)
+                ->orWhere('user_id', '=', Auth::user()->id);
+            } else {
+                $query->where('public', '=', true);
+            }
+        })
+        ->whereNotNull('longitude')->whereNotNull('latitude')
+        ->where(function($query) use ($filter){
+            if($filter){
+                // Filter based on time today
+                if($filter == "today"){
+                    $query->whereDate("happening_starts", "<=", Carbon::now())
+                        ->whereDate("happening_ends", ">=", Carbon::now());
+                }
+                // Filter based on time tomorrow
+                if($filter == "tomorrow"){
+                    $query->whereDate("happening_starts", "<=", Carbon::now()->addDay())
+                        ->whereDate("happening_ends", ">=", Carbon::now()->addDay());
+                }
+                // Filter based on time upcoming
+                if($filter == "upcoming"){
+                    $query->whereDate("happening_starts", ">", Carbon::now()->addDay());
+                }
+            }
+        })
+        ->select(['uuid', 'happening_name', 'happening_information', 'longitude', 'latitude', 'happening_starts', 'happening_ends'])->get();
+    }
+    
     /**
      * Login
      *
@@ -144,19 +183,21 @@ class AuthController extends Controller
     public function saveHappening(Request $request){
 
         $validator = Validator::make($request->all(), $rules = [
-            "happening_type" => "max:128",
+            "public" => "required|boolean",
             "happening_name" => "required|max:128",
             "happening_information" => "required|max:1024",
-            "happening_starts" => "required|date_format:d.m.Y H:i",
-            "happening_ends" => "required|date_format:d.m.Y H:i|after:happening_starts",
+            "happening_starts" => "required|date_format:Y-m-d H:i",
+            "happening_ends" => "required|date_format:Y-m-d H:i|after:happening_starts",
             "street_address" => "max:128|required",
-            "zipcode" => "numeric|required",
+            "zipcode" => "string|required",
             "city" => "max:128|required",
             // Invites
             "invites" => "array",
             "invites.*.invitation_name" => "required",
             "invites.*.invitation_information" => "max:512",
             "invites.*.max_attendees" => "required|min:1",
+            "latitude" => "nullable|numeric",
+            "longitude" => "nullable|numeric"
         ]);
 
         // If validator passes
@@ -181,7 +222,22 @@ class AuthController extends Controller
                 // Store if any
                 $happening->happening_type = $request->get("happening_type");
             }
+
+            // Store if exact location set
+            if($request->has('latitude'))
+            {
+                // Store if any
+                $happening->latitude = $request->get("latitude");
+            }
+            if($request->has('longitude'))
+            {
+                // Store if any
+                $happening->longitude = $request->get("longitude");
+            }
+
+            $happening->public = $request->get("public");
             $happening->happening_name = $request->get("happening_name");
+            $happening->happening_name_local = $request->get("happening_name");
             $happening->happening_information = $request->get("happening_information");
             $happening->happening_starts = $request->get("happening_starts");
             $happening->happening_ends = $request->get("happening_ends");
@@ -189,6 +245,8 @@ class AuthController extends Controller
             $happening->street_address = $request->get("street_address");
             $happening->zipcode = $request->get("zipcode");
             $happening->city = $request->get("city");
+            // Store who made the happening
+            $happening->user_id = Auth::user()->id;
             // Save happening
             $happening->save();
 

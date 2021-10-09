@@ -25,7 +25,7 @@ class AddInvitationsTables extends Migration
             $table->text('happening_information')->nullable();
             $table->string('happening_name_local', 128);
             $table->text('happening_information_local')->nullable();
-            $table->string('locality', 128);
+            $table->string('locality', 128)->default("fi");
             $table->datetime('happening_starts')->nullable();
             $table->datetime('happening_ends')->nullable();
             $table->string('street_address', 256)->nullable();
