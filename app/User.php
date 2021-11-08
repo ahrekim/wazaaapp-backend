@@ -37,4 +37,12 @@ class User extends Authenticatable
     protected $casts = [
         'email_verified_at' => 'datetime',
     ];
+
+    /**
+     * Many-To-Many relation with user
+     * 
+     */
+    public function invites(){
+        return $this->belongsToMany(Invite::class);
+    }
 }
