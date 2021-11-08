@@ -40,6 +40,8 @@ Route::middleware(['auth:sanctum'])->prefix('auth')->group(function () {
     Route::get('/me', 'AuthController@me');
     Route::patch('/password', 'AuthController@changePassword');
 
+    // Get my events
+    Route::get('/events/my', 'AuthController@getMyEvents');
     // Get events
     Route::get('/events/{filter?}', 'AuthController@getEvents');
 
@@ -49,8 +51,12 @@ Route::middleware(['auth:sanctum'])->prefix('auth')->group(function () {
     Route::get('/happenings/{uuid}', 'AuthController@getHappening');
     // Save happening
     Route::post('/happenings', 'AuthController@saveHappening');
+    // Save happening invite
+    Route::post('/happenings/{uuid}/invite', 'AuthController@saveInvite');
     // Delete happening
     Route::delete('/happenings/{uuid}', 'AuthController@deleteHappening');
+    // Get my invitations
+    Route::get('/invitations', 'AuthController@getMyInvitations');
     // Delete Photos
     Route::delete('/photos/{uuid}', 'PhotosController@deletePhoto');
 });

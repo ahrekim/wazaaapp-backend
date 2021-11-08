@@ -52,6 +52,18 @@ class AuthController extends Controller
         })
         ->select(['uuid', 'happening_name', 'happening_information', 'longitude', 'latitude', 'happening_starts', 'happening_ends'])->get();
     }
+    /**
+     * Get my events
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function getMyEvents()
+    {
+        return Happening::where('user_id', '=', Auth::user()->id)
+        ->whereNotNull('longitude')->whereNotNull('latitude')
+        ->orderBy('happening_stars', 'DESC')
+        ->select(['uuid', 'happening_name', 'happening_information', 'longitude', 'latitude', 'happening_starts', 'happening_ends'])->get();
+    }
     
     /**
      * Login
@@ -178,6 +190,68 @@ class AuthController extends Controller
     }
 
     /**
+     * Save invite
+     */
+    public function saveInvite(Request $request, $uuid = null){
+        $validator = Validator::make($request->all(), $rules = [
+            "invitation_name" => "required",
+            "invitation_information" => "max:512",
+            "invitee_email" => "required|email",
+            "max_attendees" => "required|min:1"
+        ]);
+
+        // If validator passes
+        if($validator->passes()){
+
+            // Find the happening with uuid, must also be created by the logged in user
+            $happening = Happening::where('uuid', '=', $uuid)->where('user_id', '=', Auth::user()->id)->first();
+            // Happening not found
+            if(!$happening){
+                // Not found
+                return response()->json("happening not found", 404);
+            }
+
+            // Check for existing invite or create new
+            if($request->has('uuid')){
+                // Find the happening with uuid, must also be created by the logged in user
+                $invite = Invite::where('uuid', '=', $request->get('uuid'))->where('happening_id', '=', $happening->id)->first();
+                // Create new if not found
+                if(!$invite){
+                    // Not found
+                    return response()->json("Invite not found", 404);
+                }
+            } else {
+                $invite = new Invite();
+                $invite->uuid = Helpers::randomStr(16);
+                $invite->happening_id = $happening->id;
+            }
+
+            // Store who made the happening
+            $invite->invitation_name = $request->get('invitation_name');
+            $invite->max_attendees = $request->get('max_attendees');
+            $invite->invitee_email = $request->get('invitee_email');
+
+            // Check if the invitee email is existing user
+            $existingUser = User::where('email', '=', $request->get('invitee_email'))->first();
+            if($existingUser){
+                // Attach to the user directly
+                $invite->user_id = $existingUser->id;
+            }
+
+            // Save invite
+            $invite->save();
+
+            // Success
+            return response()->json("Success!", 200);
+        }
+        else {
+            // Validation errors
+            return response()->json(["message" => "Error!", "errors" => $validator->errors()], 400);
+        }
+    }
+
+
+    /**
      * Save happening
      */
     public function saveHappening(Request $request){
@@ -204,8 +278,8 @@ class AuthController extends Controller
         if($validator->passes()){
             // If has uuid
             if($request->has('uuid')){
-                // Find the happening with uuid
-                $happening = Happening::where('uuid', '=', $request->get('uuid'))->first();
+                // Find the happening with uuid, must also be created by the logged in user
+                $happening = Happening::where('uuid', '=', $request->get('uuid'))->where('user_id', '=', Auth::user()->id)->first();
                 // Create new if not found
                 if(!$happening){
                     // Not found
@@ -250,51 +324,23 @@ class AuthController extends Controller
             // Save happening
             $happening->save();
 
-            // Set invites to var
-            $invites = $request->get("invites");
-            // Store invite ids to array, init
-            $inviteIds = [];
-            // Check if there are any invites
-            if(count($invites))
-            {
-                foreach($invites as $invite)
-                {
-                    if(isset($invite["uuid"]))
-                    {
-                        // Find by possible uuid
-                        $modifyInvite = Invite::where('uuid', '=', $invite['uuid'])->first();
-                    } else {
-                        $modifyInvite = new Invite();
-                        $modifyInvite->uuid = Helpers::randomStr(16);
-                        $modifyInvite->happening_id = $happening->id;
-                    }
-
-                    // Modify/create values
-                    $modifyInvite->invitation_name = $invite["invitation_name"];
-                    if(isset($invite["invitation_information"]))
-                    {
-                        $modifyInvite->invitation_information = $invite["invitation_information"];
-                    }
-                    $modifyInvite->max_attendees = $invite["max_attendees"];
-                    $modifyInvite->save();
-
-                    // Set as safe
-                    $inviteIds[] = $modifyInvite->id;
-                }
-            }
-
-            // remove all invites that are not in array
-            DB::table('invites')->whereNull('deleted_at')->where('happening_id', '=', $happening->id)->whereNotIn('id', $inviteIds)
-                ->update([
-                    "deleted_at" => Carbon::now()
-                ]);
-
             // Success
             return response()->json("Success!", 200);
 
         } else {
             return response()->json(["message" => "Error!", "errors" => $validator->errors()], 400);
         }
+    }
+
+    /**
+     * Get the authenticated users invitations
+     * @return Invitation
+     */
+    public function getMyInvitations()
+    {
+        return Invite::with('happening')
+            ->where('user_id', '=', Auth::user()->id)
+            ->get();
     }
 
 }

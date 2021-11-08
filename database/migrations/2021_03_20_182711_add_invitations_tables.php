@@ -42,6 +42,7 @@ class AddInvitationsTables extends Migration
             $table->id();
             $table->string('uuid', 32)->unique();
             $table->integer('happening_id');
+            $table->integer('user_id')->nullable();
             $table->string('invitation_name', 256);
             $table->string('invitee_email', 256)->nullable();
             $table->integer('max_attendees')->default(1);
