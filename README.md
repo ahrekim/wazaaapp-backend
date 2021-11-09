@@ -18,4 +18,5 @@ Finally run ```php artisan db:seed``` For seeding the database with example data
 
 The project can be served with ```php artisan serve```
 
-
+## License
+[MIT](https://choosealicense.com/licenses/mit/)
