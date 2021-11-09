@@ -19,7 +19,7 @@
 	// Set markers
   response.json().then(events => {
     events.forEach(element => {
-      L.marker([element.longitude, element.latitude]).addTo(map)
+      L.marker([element.latitude, element.longitude]).addTo(map)
       .bindPopup('<h2 class="map-title">'+ element.happening_name +'<h2><p class="map-text">' + element.happening_information + '</p></br>'+element.happening_starts+' - '+element.happening_ends);
     });
   })

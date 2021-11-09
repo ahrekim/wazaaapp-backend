@@ -9,6 +9,8 @@ use App\Helpers\TranslateHelper;
 use App\Tag;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
+use Symfony\Component\Console\Helper\ProgressBar;
+use Symfony\Component\Console\Output\ConsoleOutput;
 
 class HappeningsSeeder extends Seeder
 {
@@ -19,12 +21,23 @@ class HappeningsSeeder extends Seeder
      */
     public function run()
     {
+        echo "This gets events from Helsinki API, very slow. For demo purposes this can be cancelled after a suitable amount of events has been imported.";
+
+        $processingStarted = false;
         $client = new GuzzleHttp\Client();
         $page = "https://api.hel.fi/linkedevents/v1/event?start=".Carbon::now()->format('Y-m-d')."&end=".Carbon::now()->addDays(7)->format('Y-m-d');
         while($page != null){
             $musicEvents = $client->request("GET", $page);
             if($musicEvents->getStatusCode() == 200){
                 $events = json_decode($musicEvents->getBody());
+
+                // Start progress bar
+                if($processingStarted == false){
+                    $output = new ConsoleOutput();
+                    $progress = new ProgressBar($output, $events->meta->count);
+                    $processingStarted = true;
+                }
+
                 $page = $events->meta->next;
                 if(count($events->data)){
                     foreach($events->data as $eventData){
@@ -35,12 +48,12 @@ class HappeningsSeeder extends Seeder
                             $happening->source_identifier = $eventData->id;
                             $happening->public = true;
                             $happening->managed_happening = false;
-                            $happening->happening_name = isset($eventData->name->en) ? $eventData->name->en : TranslateHelper::translate($eventData->name->fi, "fi", "en");
-                            $happening->happening_information = isset($eventData->short_description->en) ? $eventData->short_description->en : TranslateHelper::translate($eventData->short_description->fi, "fi", "en");
+                            $happening->happening_name = isset($eventData->name->en) ? $eventData->name->en : $eventData->name->fi;
+                            $happening->happening_information = isset($eventData->short_description->en) ? $eventData->short_description->en : $eventData->short_description->fi;
                             $happening->happening_name_local = $eventData->name->fi;
                             $happening->happening_information_local = $eventData->short_description->fi;
-                            $happening->happening_starts = Carbon::parse($eventData->start_time)->format("d.m.Y H:i");
-                            $happening->happening_ends = Carbon::parse($eventData->end_time)->format("d.m.Y H:i");
+                            $happening->happening_starts = Carbon::parse($eventData->start_time)->format("Y-m-d H:i");
+                            $happening->happening_ends = Carbon::parse($eventData->end_time)->format("Y-m-d H:i");
         
                             // If there is a location
                             if($eventData->location){
@@ -98,11 +111,13 @@ class HappeningsSeeder extends Seeder
                                 }
                             }
                         }
+                        $progress->advance();
                     }
                 }
             } else {
                 break;
             }
         }
+        $progress->finish();
     }
 }
