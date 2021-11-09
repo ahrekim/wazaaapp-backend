@@ -1,27 +1,20 @@
 <?php
 
-use Illuminate\Database\Seeder;
+namespace App\Tasks;
+
 use App\Happening;
 use App\Helpers\Helpers;
 use App\Tag;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
-use Symfony\Component\Console\Helper\ProgressBar;
-use Symfony\Component\Console\Output\ConsoleOutput;
+use GuzzleHttp\Client as Guzzle;
 
-class HappeningsSeeder extends Seeder
+class HelsinkiEventsApi
 {
-    /**
-     * Run the database seeds.
-     *
-     * @return void
-     */
-    public function run()
+    public function __invoke()
     {
-        echo "This gets events from Helsinki API, very slow. For demo purposes this can be cancelled after a suitable amount of events has been imported.";
-
         $processingStarted = false;
-        $client = new GuzzleHttp\Client();
+        $client = new Guzzle();
         $page = "https://api.hel.fi/linkedevents/v1/event?start=".Carbon::now()->format('Y-m-d')."&end=".Carbon::now()->addDays(7)->format('Y-m-d');
         while($page != null){
             $musicEvents = $client->request("GET", $page);
@@ -30,8 +23,6 @@ class HappeningsSeeder extends Seeder
 
                 // Start progress bar
                 if($processingStarted == false){
-                    $output = new ConsoleOutput();
-                    $progress = new ProgressBar($output, $events->meta->count);
                     $processingStarted = true;
                 }
 
@@ -57,7 +48,7 @@ class HappeningsSeeder extends Seeder
                                 $arrLink = (array)$eventData->location;
                                 $arrLink = $arrLink["@id"];
                                 // Get via guzzle
-                                $locationClient = new GuzzleHttp\Client();
+                                $locationClient = new Guzzle();
                                 $eventLocation = $locationClient->request("GET", $arrLink);
                                 if($eventLocation->getStatusCode() == 200){
                                     $eventLocation = json_decode($eventLocation->getBody());
@@ -79,7 +70,7 @@ class HappeningsSeeder extends Seeder
                                     $keywordLink = (array)$keywordLink;
                                     $link = $keywordLink['@id'];
                                     // Get via guzzle
-                                    $keywordClient = new GuzzleHttp\Client();
+                                    $keywordClient = new Guzzle();
                                     $keyword = $keywordClient->request("GET", $link);
                                     if($keyword->getStatusCode() == 200){
                                         // get the keywords
@@ -108,13 +99,11 @@ class HappeningsSeeder extends Seeder
                                 }
                             }
                         }
-                        $progress->advance();
                     }
                 }
             } else {
                 break;
             }
         }
-        $progress->finish();
     }
 }
